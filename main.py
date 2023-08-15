@@ -1,25 +1,25 @@
 # KnyshBoT Discord Project by @De44iK aka Denys Podolkhov
 # Feel free to copy, use and modify this code
-# Version: BotOS 0.31.2 Silent update
+# Version: BotOS 0.31.3 User Experience Update
 
 from secret import BOT_TOKEN_RELEASE, BOT_TOKEN_TESTING, WEATHER_API_KEY
 from config import BOT_PREFIX, BOT_MODE
 from discord.ui import Button, View
+from discord import Embed, Color
 from discord.ext import commands
 from typing import List
+import contextlib
+import traceback
 import requests
+import datetime
 import discord
 import asyncio
 import qrcode
 import random
-import os
-import io
-import contextlib
-import traceback
-from discord import Embed, Color
 import time
 import json
-import datetime
+import os
+import io
 
 
 intents = discord.Intents.all()
@@ -149,19 +149,27 @@ async def ping(ctx):
 
 @bot.command()
 async def advt(ctx: commands.Context, *, args):
-    result = str(args)
-    channel = ctx.channel
+    try:
+        result = str(args)
+        channel = ctx.channel
 
-    async for message in channel.history(limit=1):
-        await message.delete()
-
-    await ctx.send(
-        embed=discord.Embed(
-            title=f"{result}",
-            description=f"Объявление от {ctx.author.name}",
-            color=random.choice(color_list)
+        async for message in channel.history(limit=1):
+            await message.delete()
+        phrases = ["Объявление от: ", "С любовью, ваш ", "Это написал ", "Вас уведомляет ", "Пишет админчик "]
+        await ctx.send(
+            embed=discord.Embed(
+                title=f"{result}",
+                description= random.choice(phrases)+f"{ctx.author.name}",
+                color=random.choice(color_list)
+            )
         )
-    )
+    except Exception:
+        embed = discord.Embed(
+            title="Ошибка",
+            description='Обьявления доступны только для каналов на серверах',
+            color=0xFC2403,
+        )
+        await ctx.send(embed=embed)
 
 @bot.command()
 async def qr(ctx, *, args):
@@ -555,20 +563,6 @@ async def cls(ctx):
         await ctx.send("Эта команда только для музыкального чата")
 
 
-# Register the button callback
-@bot.command()
-async def meme(ctx):
-    try:
-        content = requests.get("https://meme-api.herokuapp.com/gimme").text
-        data = json.loads(content)
-        meme = discord.Embed(title=data['title'], color=discord.Color.random())
-        meme.set_image(url=data['url'])
-        await ctx.reply(embed=meme)
-    except Exception as e:
-        print('Error fetching meme:', e)
-        await ctx.send('Oops! An error occurred while fetching the meme.')
-        
-
 @bot.command()
 async def tic(ctx: commands.Context):
     """Starts a tic-tac-toe game with yourself."""
@@ -625,7 +619,7 @@ async def on_ready():
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.playing,
-            name="/menu | Ver 0.31.2",
+            name="/menu | Ver 0.31.3",
             # details="none",
             # state="© 2023 D44K Local Software Corp",
         )
