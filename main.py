@@ -644,4 +644,4 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 
-#damn this sh*t's became long asf
+#damn this code became long asf
