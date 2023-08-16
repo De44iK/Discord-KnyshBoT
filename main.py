@@ -1,6 +1,6 @@
 # KnyshBoT Discord Project by @De44iK aka Denys Podolkhov
 # Feel free to copy, use and modify this code
-# Version: BotOS 0.31.3 User Experience Update
+# Version: BotOS 0.32 User Experience Update
 
 from secret import BOT_TOKEN_RELEASE, BOT_TOKEN_TESTING, WEATHER_API_KEY
 from config import BOT_PREFIX, BOT_MODE
@@ -26,32 +26,58 @@ intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents, help_command=None)
 
+# Define all the colors
+
+DEFAULT = Color.default()
+TEAL = Color.teal()
+DARK_TEAL = Color.dark_teal()
+GREEN = Color.green()
+DARK_GREEN = Color.dark_green()
+BLUE = Color.blue()
+DARK_BLUE = Color.dark_blue()
+PURPLE = Color.purple()
+DARK_PURPLE = Color.dark_purple()
+MAGENTA = Color.magenta()
+DARK_MAGENTA = Color.dark_magenta()
+GOLD = Color.gold()
+DARK_GOLD = Color.dark_gold()
+ORANGE = Color.orange()
+DARK_ORANGE = Color.dark_orange()
+RED = Color.red()
+DARK_RED = Color.dark_red()
+LIGHTER_GREY = Color.lighter_grey()
+LIGHT_GREY = Color.light_grey()
+DARK_GREY = Color.dark_grey()
+DARKER_GREY = Color.darker_grey()
+BLURPLE = Color.blurple()
+GREYPLE = Color.greyple()
+
 color_list = [
-    Color.default(),
-    Color.teal(),
-    Color.dark_teal(),
-    Color.green(),
-    Color.dark_green(),
-    Color.blue(),
-    Color.dark_blue(),
-    Color.purple(),
-    Color.dark_purple(),
-    Color.magenta(),
-    Color.dark_magenta(),
-    Color.gold(),
-    Color.dark_gold(),
-    Color.orange(),
-    Color.dark_orange(),
-    Color.red(),
-    Color.dark_red(),
-    Color.lighter_grey(),
-    Color.light_grey(),
-    Color.dark_grey(),
-    Color.darker_grey(),
-    Color.blurple(),
-    Color.greyple(),
-    Color.red() 
+    DEFAULT,
+    TEAL,
+    DARK_TEAL,
+    GREEN,
+    DARK_GREEN,
+    BLUE,
+    DARK_BLUE,
+    PURPLE,
+    DARK_PURPLE,
+    MAGENTA,
+    DARK_MAGENTA,
+    GOLD,
+    DARK_GOLD,
+    ORANGE,
+    DARK_ORANGE,
+    RED,
+    DARK_RED,
+    LIGHTER_GREY,
+    LIGHT_GREY,
+    DARK_GREY,
+    DARKER_GREY,
+    BLURPLE,
+    GREYPLE,
 ]
+
 
 embedCMDS = Embed(
     title="Команды KnyshBoT",
@@ -64,11 +90,11 @@ embedCMDS.add_field(name="/ping", value="🌐 Проверить скорост�
 embedCMDS.add_field(name="/qr", value="🔳 Создать qr-код с любой информацией", inline=False)
 embedCMDS.add_field(name="/code", value="💻 Запустить код на Python прямо в чате", inline=False)
 embedCMDS.add_field(name="/cmds", value="🧾 Открыть список команд в обход меню", inline=False)
-embedCMDS.add_field(name="/advt", value="❗ Создать объявление от имени Главного Бота", inline=False)
+embedCMDS.add_field(name="/advt", value="❗ Создать объявление в канале сервера", inline=False)
 embedCMDS.add_field(name="/cls", value="🎵 Очистить чат (только для музыкального чата)", inline=False)
 embedCMDS.add_field(name="/tic", value="⭕ Сыграть в Крестики-Нолики", inline=False)
 embedCMDS.add_field(name="/w", value="🌥 Узнать погоду в любом городе", inline=False)
-
+embedCMDS.add_field(name="/num", value="❓ Игра: Угадай Число", inline=False)
 
 @bot.command()
 async def cmds(ctx):
@@ -87,16 +113,17 @@ async def test(ctx):
     await ctx.send(random.choice(testPhrases))
 
 
-def create_error_embed(error_message):
-    embed = discord.Embed(
-        title="Error", description=error_message, color=discord.Color.red()
-    )
-    return embed
-
-
-# Command: Run Python code
 @bot.command()
 async def code(ctx):
+
+    def create_error_embed(error_message):
+        embed = discord.Embed(
+            title="Error", description=error_message, color=discord.Color.red()
+        )
+        return embed
+
+
+
     await ctx.send("Write your code here and send to debug")
 
     def check(msg):
@@ -127,8 +154,6 @@ async def code(ctx):
 
 @bot.command()
 async def ping(ctx):
-    # Calculate the bot's latency
-    bot_latency = round(bot.latency * 1000)  # Convert to milliseconds
 
     # Record the time when the user's message was received
     start_time = time.time()
@@ -153,8 +178,7 @@ async def advt(ctx: commands.Context, *, args):
         result = str(args)
         channel = ctx.channel
 
-        async for message in channel.history(limit=1):
-            await message.delete()
+        await ctx.delete()
         phrases = ["Объявление от: ", "С любовью, ваш ", "Это написал ", "Вас уведомляет ", "Пишет админчик "]
         await ctx.send(
             embed=discord.Embed(
@@ -167,7 +191,7 @@ async def advt(ctx: commands.Context, *, args):
         embed = discord.Embed(
             title="Ошибка",
             description='Обьявления доступны только для каналов на серверах',
-            color=0xFC2403,
+            color=RED,
         )
         await ctx.send(embed=embed)
 
@@ -324,6 +348,125 @@ class TicTacToe(discord.ui.View):
 
 @bot.command(name="w")
 async def weather(ctx, *, city_name):
+
+    def get_weather_data(city):
+    # Make API request to OpenWeatherMap
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
+        response = requests.get(url)
+        return response.json()
+    
+    def translate_weather(value):
+        match value:
+            case "clear sky":
+                a = "Ясно ☀️"
+            case "few clouds":
+                a = "Немного облачно 🌤"
+            case "scattered clouds":
+                a = "Рассеянные облака ☁️"
+            case "broken clouds":
+                a = "Облачно с прояснениями ☁️"
+            case "overcast clouds":
+                a = "Пасмурно ☁️"
+            case "mist":
+                a = "Туман 🌫️"
+            case "fog":
+                a = "Туман 🌫️"
+            case "haze":
+                a = "Мгла 🌫️"
+            case "smoke":
+                a = "Дымка 🔥"
+            case "dust":
+                a = "Пыль 💨"
+            case "sand":
+                a = "Песчаная буря 🌪️"
+            case "ash":
+                a = "Пепел ☠️"
+            case "squalls":
+                a = "Шквалы 💨"
+            case "tornado":
+                a = "Торнадо 🌪️"
+            case "tropical storm":
+                a = "Тропический шторм 🌀"
+            case "hurricane":
+                a = "Ураган 🌀"
+            case "light rain":
+                a = "Легкий дождь 🌧️"
+            case "moderate rain":
+                a = "Умеренный дождь 🌧️"
+            case "heavy rain":
+                a = "Сильный дождь 🌧️"
+            case "shower rain":
+                a = "Ливневый дождь 🌧️"
+            case "light snow":
+                a = "Легкий снег 🌨️"
+            case "moderate snow":
+                a = "Умеренный снег 🌨️"
+            case "heavy snow":
+                a = "Сильный снег 🌨️"
+            case "sleet":
+                a = "Дождь со снегом 🌨️"
+            case "shower sleet":
+                a = "Ливневый дождь со снегом 🌨️"
+            case "light rain and snow":
+                a = "Легкий дождь и снег 🌧️❄️"
+            case "moderate rain and snow":
+                a = "Умеренный дождь и снег 🌧️❄️"
+            case "light shower snow":
+                a = "Легкий ливневый снег 🌨️"
+            case "thunderstorm with light rain":
+                a = "Гроза с небольшим дождем ⛈️🌧️"
+            case "thunderstorm with rain":
+                a = "Гроза с дождем ⛈️🌧️"
+            case "thunderstorm with heavy rain":
+                a = "Гроза с сильным дождем ⛈️🌧️"
+            case "light thunderstorm":
+                a = "Легкая гроза ⛈️"
+            case "moderate thunderstorm":
+                a = "Умеренная гроза ⛈️"
+            case "heavy thunderstorm":
+                a = "Сильная гроза ⛈️"
+            case "ragged thunderstorm":
+                a = "Неровная гроза ⛈️"
+            case "thunderstorm with light drizzle":
+                a = "Гроза с моросящим дождем и молниями ⛈️🌧️"
+            case "thunderstorm with drizzle":
+                a = "Гроза с моросящим дождем ⛈️🌧️"
+            case "thunderstorm with heavy drizzle":
+                a = "Гроза с сильным моросящим дождем ⛈️🌧️"
+            case _:
+                a = "Неизвестно ❓"
+
+        return a
+
+    def create_weather_embed(data):
+    # Create and return a Discord embed for weather data
+        embed = discord.Embed(
+            title=f"Погода в городе: {data['name']}",
+            description=translate_weather(data["weather"][0]["description"]),
+            color=0x3498DB,
+        )
+        embed.add_field(name="Температура", value=f"{data['main']['temp']}°C")
+        embed.add_field(name="Влажность", value=f"{data['main']['humidity']}%")
+        embed.add_field(name="Скорость ветра", value=f"{data['wind']['speed']} m/s")
+        return embed
+
+    def create_more_info_embed(data):
+        # Create and return a Discord embed with more info
+
+        embed = discord.Embed(
+            title=f"Больше информации о погоде в: {data['name']}",
+            description=translate_weather(data["weather"][0]["description"]),
+            color=0x3498DB,
+        )
+
+        embed.add_field(name="Температура", value=f"{data['main']['temp']}°C")
+        embed.add_field(name="Влажность", value=f"{data['main']['humidity']}%")
+        embed.add_field(name="Скорость ветра", value=f"{data['wind']['speed']} m/s")
+        embed.add_field(name="Давление", value=f"{data['main']['pressure']} hPa")
+
+        return embed
+
+
     try:
         weather_data = get_weather_data(city_name)
         embed = create_weather_embed(weather_data)
@@ -357,135 +500,12 @@ async def weather(ctx, *, city_name):
         )
 
 
-def get_weather_data(city):
-    # Make API request to OpenWeatherMap
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
-    response = requests.get(url)
-    return response.json()
-
-
-def translate_weather(value):
-    match value:
-        case "clear sky":
-            a = "Ясно ☀️"
-        case "few clouds":
-            a = "Немного облачно 🌤"
-        case "scattered clouds":
-            a = "Рассеянные облака ☁️"
-        case "broken clouds":
-            a = "Облачно с прояснениями ☁️"
-        case "overcast clouds":
-            a = "Пасмурно ☁️"
-        case "mist":
-            a = "Туман 🌫️"
-        case "fog":
-            a = "Туман 🌫️"
-        case "haze":
-            a = "Мгла 🌫️"
-        case "smoke":
-            a = "Дымка 🔥"
-        case "dust":
-            a = "Пыль 💨"
-        case "sand":
-            a = "Песчаная буря 🌪️"
-        case "ash":
-            a = "Пепел ☠️"
-        case "squalls":
-            a = "Шквалы 💨"
-        case "tornado":
-            a = "Торнадо 🌪️"
-        case "tropical storm":
-            a = "Тропический шторм 🌀"
-        case "hurricane":
-            a = "Ураган 🌀"
-        case "light rain":
-            a = "Легкий дождь 🌧️"
-        case "moderate rain":
-            a = "Умеренный дождь 🌧️"
-        case "heavy rain":
-            a = "Сильный дождь 🌧️"
-        case "shower rain":
-            a = "Ливневый дождь 🌧️"
-        case "light snow":
-            a = "Легкий снег 🌨️"
-        case "moderate snow":
-            a = "Умеренный снег 🌨️"
-        case "heavy snow":
-            a = "Сильный снег 🌨️"
-        case "sleet":
-            a = "Дождь со снегом 🌨️"
-        case "shower sleet":
-            a = "Ливневый дождь со снегом 🌨️"
-        case "light rain and snow":
-            a = "Легкий дождь и снег 🌧️❄️"
-        case "moderate rain and snow":
-            a = "Умеренный дождь и снег 🌧️❄️"
-        case "light shower snow":
-            a = "Легкий ливневый снег 🌨️"
-        case "thunderstorm with light rain":
-            a = "Гроза с небольшим дождем ⛈️🌧️"
-        case "thunderstorm with rain":
-            a = "Гроза с дождем ⛈️🌧️"
-        case "thunderstorm with heavy rain":
-            a = "Гроза с сильным дождем ⛈️🌧️"
-        case "light thunderstorm":
-            a = "Легкая гроза ⛈️"
-        case "moderate thunderstorm":
-            a = "Умеренная гроза ⛈️"
-        case "heavy thunderstorm":
-            a = "Сильная гроза ⛈️"
-        case "ragged thunderstorm":
-            a = "Неровная гроза ⛈️"
-        case "thunderstorm with light drizzle":
-            a = "Гроза с моросящим дождем и молниями ⛈️🌧️"
-        case "thunderstorm with drizzle":
-            a = "Гроза с моросящим дождем ⛈️🌧️"
-        case "thunderstorm with heavy drizzle":
-            a = "Гроза с сильным моросящим дождем ⛈️🌧️"
-        case _:
-            a = "Неизвестно ❓"
-
-    return a
-
-
-def create_weather_embed(data):
-    # Create and return a Discord embed for weather data
-
-    embed = discord.Embed(
-        title=f"Погода в городе: {data['name']}",
-        description=translate_weather(data["weather"][0]["description"]),
-        color=0x3498DB,
-    )
-    embed.add_field(name="Температура", value=f"{data['main']['temp']}°C")
-    embed.add_field(name="Влажность", value=f"{data['main']['humidity']}%")
-    embed.add_field(name="Скорость ветра", value=f"{data['wind']['speed']} m/s")
-    return embed
-
-
-def create_more_info_embed(data):
-    # Create and return a Discord embed with more info
-
-    embed = discord.Embed(
-        title=f"Больше информации о погоде в: {data['name']}",
-        description=translate_weather(data["weather"][0]["description"]),
-        color=0x3498DB,
-    )
-
-    embed.add_field(name="Температура", value=f"{data['main']['temp']}°C")
-    embed.add_field(name="Влажность", value=f"{data['main']['humidity']}%")
-    embed.add_field(name="Скорость ветра", value=f"{data['wind']['speed']} m/s")
-    embed.add_field(name="Давление", value=f"{data['main']['pressure']} hPa")
-
-    return embed
-
-
-button1 = Button(label="Инфо", style=discord.ButtonStyle.green)
-button2 = Button(label="Команды", style=discord.ButtonStyle.green)
-button3 = Button(label="Статистика", style=discord.ButtonStyle.green)
-
-
 @bot.command()
 async def menu(ctx):
+    button1 = Button(label="Инфо", style=discord.ButtonStyle.green)
+    button2 = Button(label="Команды", style=discord.ButtonStyle.green)
+    button3 = Button(label="Статистика", style=discord.ButtonStyle.green)
+
     view = View()
     view.add_item(button1)
     view.add_item(button2)
@@ -560,7 +580,12 @@ async def cls(ctx):
 
         await ctx.send(f"Channel cleared. Deleted {messages_deleted} messages.")
     else:
-        await ctx.send("Эта команда только для музыкального чата")
+        embed = discord.Embed(
+            title="🟥 Ошибка",
+            description="Эта команда только для музыкального чата",
+            color=RED,
+        )
+        await ctx.send(embed=embed)
 
 
 @bot.command()
@@ -568,50 +593,80 @@ async def tic(ctx: commands.Context):
     """Starts a tic-tac-toe game with yourself."""
     await ctx.send("Крестики-нолики: Х ходит первым", view=TicTacToe())
 
-# buttonA = Button(label="A", style=discord.ButtonStyle.green)
-# buttonB = Button(label="B", style=discord.ButtonStyle.green)
-# buttonC = Button(label="C", style=discord.ButtonStyle.green)
 
-# @bot.command()
-# async def cls1(ctx):
-#     chanid = ctx.channel.id
-#     clearchat()
-#     async def clearchat():
-#         if chanid == 996721226166841424:
-#             # Fetch the channel to clear messages from
-#             channel = ctx.channel
+@bot.command()
+async def num(ctx):
 
-#             # Fetch and delete messages in batches
-#             messages_deleted = 0
-#             async for message in channel.history(limit=None):
-#                 await message.delete()
-#                 messages_deleted += 1
+    target_number = random.randint(1, 50)
+    remaining_tries = 7
+    embed = discord.Embed(
+            title="Игра: Угадай Число",
+            description="Загадано число от 1 до 50. Напиши свое предположение в чат\nДано 6 попыток",
+            color=BLUE
+        )
+    await ctx.send(embed=embed)
+    while remaining_tries > 0:
+        try:
+            message = await bot.wait_for("message", timeout=5, check=lambda m: m.author == ctx.author)
+            guess = int(message.content)
 
-#             await ctx.send(f"Channel cleared. Deleted {messages_deleted} messages.")
-#         else:
-#             await ctx.send("Эта команда только для музыкального чата. Введите Админский пароль что бы очистить этот чат")
-#             password = []
-#             view = View()
-#             view.add_item(buttonA)
-#             view.add_item(buttonB)
-#             view.add_item(buttonC)
-#             message = await ctx.send("Меню KnyshBoT: \nВыберите один из пунктов: ", view=view)
-#             def buttonA_callback(interaction):
-#                 password.append("A")
-#                 if "".join(password) == "AABC":
-#                     print("Password is correct!!!!")
-#             def buttonB_callback(interaction):
-#                 password.append("B")
-#                 if "".join(password) == "AABC":
-#                     print("Password is correct!!!!")
-#             def buttonC_callback(interaction):
-#                 password.append("C")
-#                 if "".join(password) == "AABC":
-#                     chanid = 996721226166841424
-#                     clearchat()
-#         buttonA.callback = buttonA_callback
-#         buttonB.callback = buttonB_callback
-#         buttonC.callback = buttonC_callback
+            if guess <= 1 or guess >= 50:
+                embed = discord.Embed(
+                    title="🟥 Ошибка",
+                    description="Значение находится в рамках от 1 до 50.\nПопытка не засчитана, попробуйте опять",
+                    color=RED
+                )
+
+            if guess < target_number:
+                embed = discord.Embed(
+                    title="⬆️ Больше!",
+                    description="Загаданный случайный номер больше {}.".format(guess),
+                    color=ORANGE
+                )
+                await ctx.send(embed=embed)
+            elif guess > target_number:
+                embed = discord.Embed(
+                    title="⬇️ Меньше!",
+                    description="Загаданный случайный номер меньше {}.".format(guess),
+                    color=BLURPLE
+                )
+                await ctx.send(embed=embed)
+            else:
+                embed = discord.Embed(
+                    title="✅ Победа!",
+                    description="Загаданный номер: {}.".format(guess) + f"\n Попыток оставалось: {remaining_tries}",
+                    color=GREEN
+                )
+                await ctx.send(embed=embed)
+                break
+
+            remaining_tries -= 1
+
+        except ValueError:
+            embed = discord.Embed(
+                    title="🟥 Ошибка",
+                    description="Введенное значение не является номером.\nОстанавливаем игру...",
+                    color=RED
+                )
+            await ctx.send(embed=embed)
+            break
+        except asyncio.TimeoutError:
+            embed = discord.Embed(
+                    title="🟥 Ошибка",
+                    description="🕑 Время на попытку вышло\nОстанавливаем игру...",
+                    color=RED
+                )
+            await ctx.send(embed=embed)
+            break
+    if remaining_tries == 0:
+        embed = discord.Embed(
+                        title="😥 Поражение",
+                        description="Количество попыток закончилось...",
+                        color=RED
+                    )
+        embed.add_field(name=f"Загаданное число: {target_number}", value="")
+        await ctx.send(embed=embed)
+
 
 @bot.event
 async def on_ready():
@@ -619,20 +674,20 @@ async def on_ready():
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.playing,
-            name="/menu | Ver 0.31.3",
-            # details="none",
-            # state="© 2023 D44K Local Software Corp",
+            name="/menu | Ver 0.32 UX",
         )
     )
 
+
 async def main():
-    # await load_cogs()
+
     if BOT_MODE == "RELEASE":
         await bot.start(BOT_TOKEN_RELEASE)
     elif BOT_MODE == "TESTING":
         await bot.start(BOT_TOKEN_TESTING)
     else:
         print(f"> ERROR!\nINCORRECT BOT MODE IS SELECTED: {BOT_MODE}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
