@@ -190,7 +190,7 @@ async def advt(ctx: commands.Context, *, args):
     except Exception as e:
         embed = discord.Embed(
             title="Ошибка",
-            description=e,
+            description="Обьявления доступны только для каналов на серверах",
             color=RED,
         )
         await ctx.send(embed=embed)
