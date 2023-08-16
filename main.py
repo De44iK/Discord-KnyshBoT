@@ -1,8 +1,7 @@
 # KnyshBoT Discord Project by @De44iK aka Denys Podolkhov
 # Feel free to copy, use and modify this code
-# Version: BotOS 0.32 User Experience Update
+# Version: BotOS 0.33 Safety Feature Update
 
-from secret import BOT_TOKEN_RELEASE, BOT_TOKEN_TESTING, WEATHER_API_KEY
 from config import BOT_PREFIX, BOT_MODE
 from discord.ui import Button, View
 from discord import Embed, Color
@@ -351,7 +350,7 @@ async def weather(ctx, *, city_name):
 
     def get_weather_data(city):
     # Make API request to OpenWeatherMap
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={os.environ.get('WEATHER_API_KEY')}&units=metric"
         response = requests.get(url)
         return response.json()
     
@@ -523,7 +522,7 @@ async def menu(ctx):
             description="© 2023 D44K Local Software Corp",
             color=discord.Color.green(),
         )
-        embed.add_field(name="BotOS Version", value="**ver. 0.31.2** User Experience Silent Update", inline=False)
+        embed.add_field(name="BotOS Version", value="**ver. 0.33** Safety Features Silent Update", inline=False)
         embed.add_field(name="GitHub Repository", value="https://github.com/De44iK/Discord-KnyshBoT")
         embed.add_field(name='Discord.Py Library Version', value=library_version, inline=False)
         await ctx.send(embed=embed)
@@ -674,7 +673,7 @@ async def on_ready():
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.playing,
-            name="/menu | Ver 0.32 UX",
+            name="/menu | Ver. 0.33 SF",
         )
     )
 
@@ -682,9 +681,9 @@ async def on_ready():
 async def main():
 
     if BOT_MODE == "RELEASE":
-        await bot.start(BOT_TOKEN_RELEASE)
+        await bot.start(os.environ.get("BOT_TOKEN_RELEASE"))
     elif BOT_MODE == "TESTING":
-        await bot.start(BOT_TOKEN_TESTING)
+        await bot.start(os.environ.get("BOT_TOKEN_TESTING"))
     else:
         print(f"> ERROR!\nINCORRECT BOT MODE IS SELECTED: {BOT_MODE}")
 

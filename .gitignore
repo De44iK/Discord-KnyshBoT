@@ -5,4 +5,5 @@ venv
 __pycache__
 
 guilds_data.json
-secret.py
+.env
+guilds_data.zip
