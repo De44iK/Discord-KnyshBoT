@@ -607,7 +607,7 @@ async def num(ctx):
     await ctx.send(embed=embed)
     while remaining_tries > 0:
         try:
-            message = await bot.wait_for("message", timeout=5, check=lambda m: m.author == ctx.author)
+            message = await bot.wait_for("message", timeout=30, check=lambda m: m.author == ctx.author)
             guess = int(message.content)
 
             if guess <= 1 or guess >= 50:
