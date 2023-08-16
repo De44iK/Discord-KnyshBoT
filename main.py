@@ -1,7 +1,8 @@
 # KnyshBoT Discord Project by @De44iK aka Denys Podolkhov
 # Feel free to copy, use and modify this code
-# Version: BotOS 0.33 Safety Feature Update
+# Version: BotOS 0.34 Safety Feature Update
 
+from secret import BOT_TOKEN_RELEASE, BOT_TOKEN_TESTING, WEATHER_API_KEY
 from config import BOT_PREFIX, BOT_MODE
 from discord.ui import Button, View
 from discord import Embed, Color
@@ -177,7 +178,7 @@ async def advt(ctx: commands.Context, *, args):
         result = str(args)
         channel = ctx.channel
 
-        await ctx.delete()
+        await ctx.message.delete()
         phrases = ["Объявление от: ", "С любовью, ваш ", "Это написал ", "Вас уведомляет ", "Пишет админчик "]
         await ctx.send(
             embed=discord.Embed(
@@ -186,10 +187,10 @@ async def advt(ctx: commands.Context, *, args):
                 color=random.choice(color_list)
             )
         )
-    except Exception:
+    except Exception as e:
         embed = discord.Embed(
             title="Ошибка",
-            description='Обьявления доступны только для каналов на серверах',
+            description=e,
             color=RED,
         )
         await ctx.send(embed=embed)
@@ -350,7 +351,7 @@ async def weather(ctx, *, city_name):
 
     def get_weather_data(city):
     # Make API request to OpenWeatherMap
-        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={os.environ.get('WEATHER_API_KEY')}&units=metric"
+        url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_API_KEY}&units=metric"
         response = requests.get(url)
         return response.json()
     
@@ -673,17 +674,27 @@ async def on_ready():
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.playing,
-            name="/menu | Ver. 0.33 SF",
+            name="/menu | Ver. 0.34 SF",
         )
     )
 
+def decrypt(encrypted_text, shift):
+    decrypted_text = ""
+    for char in encrypted_text:
+        if char.isalpha():
+            is_upper = char.isupper()
+            shifted_char = chr(((ord(char) - ord('A' if is_upper else 'a') - shift) % 26) + ord('A' if is_upper else 'a'))
+            decrypted_text += shifted_char
+        else:
+            decrypted_text += char
+    return decrypted_text
 
 async def main():
 
-    if BOT_MODE == "RELEASE":
-        await bot.start(os.environ.get("BOT_TOKEN_RELEASE"))
-    elif BOT_MODE == "TESTING":
-        await bot.start(os.environ.get("BOT_TOKEN_TESTING"))
+    if BOT_MODE == 1:
+        await bot.start(decrypt(BOT_TOKEN_RELEASE, 23))
+    elif BOT_MODE == 0:
+        await bot.start(decrypt(BOT_TOKEN_TESTING, 23))
     else:
         print(f"> ERROR!\nINCORRECT BOT MODE IS SELECTED: {BOT_MODE}")
 

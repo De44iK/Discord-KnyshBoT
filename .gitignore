@@ -4,6 +4,4 @@ venv
 .idea
 __pycache__
 
-guilds_data.json
-.env
-guilds_data.zip
+secret.py
