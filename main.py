@@ -20,13 +20,117 @@ import time
 import json
 import os
 import io
+import openai
+from datetime import datetime, timedelta
 
+# Load music configuration from JSON file
+def load_music_config():
+    try:
+        with open('music_config.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return []
+
+# Save music configuration to JSON file
+def save_music_config(config):
+    with open('music_config.json', 'w') as f:
+        json.dump(config, f, indent=4)
+
+
+
+
+# Load configuration from JSON file
+def load_config():
+    try:
+        with open('config.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+# Save configuration to JSON file
+def save_config(config):
+    with open('config.json', 'w') as f:
+        json.dump(config, f, indent=4)
 
 intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents, help_command=None)
+@bot.event
+async def on_message(message):
+    if message.content.startswith('s!play'):
+        play_messages = load_music_config()
+
+        play_messages.append({"content": message.content, "timestamp": str(datetime.utcnow())})
+        play_messages = play_messages[-20:]  # Limit to 20 items
+
+        save_music_config(play_messages)
+
+    await bot.process_commands(message)  # Process other commands
+
+@bot.command()
+async def music(ctx):
+    play_messages = load_music_config()
+
+    if play_messages:
+        embed = discord.Embed(title="Music Commands", color=0x00ff00)
+        for idx, play_message in enumerate(play_messages, start=1):
+            embed.add_field(name=f"Track {idx}", value=play_message["content"], inline=False)
+        await ctx.send(embed=embed)
+    else:
+        await ctx.send("No music play messages found.")
+
 
 # Define all the colors
+
+cool_quotes = [
+    {"quote": "Будущее принадлежит тем, кто верит в красоту своих мечтаний.", "author": "Элеонор Рузвельт"},
+    {"quote": "В середине трудностей рождается возможность.", "author": "Альберт Эйнштейн"},
+    {"quote": "Поверь, что ты можешь, и ты уже на полпути к цели.", "author": "Теодор Рузвельт"},
+    {"quote": "Не смотри на часы; делай то, что они делают. Продолжай двигаться.", "author": "Сэм Левенсон"},
+    {"quote": "Успех не является конечной точкой, неудача не смертельна: важно только смело продолжать.", "author": "Уинстон Черчилль"},
+    {"quote": "Трудности часто готовят обычных людей к необычной судьбе.", "author": "Клайв С. Льюис"},
+    {"quote": "Единственное ограничение для нашего завтрашнего успеха — это сомнения сегодняшнего дня.", "author": "Франклин Д. Рузвельт"},
+    {"quote": "То, что ты получишь, достигнув своих целей, не так важно, как то, чем ты станешь, достигая своих целей.", "author": "Зиг Зиглар"},
+    {"quote": "Верь в себя и во всё, что ты есть. Знай, внутри тебя есть что-то большее, чем любое препятствие.", "author": "Кристиан Д. Ларсон"},
+    {"quote": "Успех — это не ключ к счастью. Счастье — это ключ к успеху. Если ты любишь то, что ты делаешь, ты будешь успешным.", "author": "Альберт Швейцер"},
+    {"quote": "Единственный способ делать великую работу — это любить то, что ты делаешь.", "author": "Стив Джобс"},
+    {"quote": "Дорога к успеху и дорога к неудаче почти идентичны.", "author": "Колин Р. Дэвис"},
+    {"quote": "Успех обычно приходит к тем, кто слишком занят, чтобы искать его.", "author": "Генри Дэвид Торо"},
+    {"quote": "Я замечаю, что чем усерднее я работаю, тем больше мне везет.", "author": "Томас Джефферсон"},
+    {"quote": "Секрет достижения — начать.", "author": "Марк Твен"},
+    {"quote": "Единственное место, где успех идет перед трудом, это словарь.", "author": "Видал Сассун"},
+    {"quote": "Успех — это хождение от неудачи к неудаче, не потеряв энтузиазма.", "author": "Уинстон Черчилль"},
+    {"quote": "Успех — это не только заработать деньги. Это оказать влияние.", "author": "Неизвестный"},
+    {"quote": "Успех — это не результат спонтанного горения. Ты должен поджечь себя сам.", "author": "Арнольд Х. Гласоу"},
+    {"quote": "Единственное, что стоит между вами и вашей мечтой, это желание попробовать и вера в то, что это действительно возможно.", "author": "Джоэл Браун"},
+    {"quote": "Ваше время ограничено, не тратьте его на жизнь другого человека.", "author": "Стив Джобс"},
+    {"quote": "Не давайте страхам в вашем разуме управлять вами. Пусть вами руководят мечты в вашем сердце.", "author": "Рой Т. Беннетт"},
+]
+cool_quotes_en = [
+    {"quote": "The future belongs to those who believe in the beauty of their dreams.", "author": "Eleanor Roosevelt"},
+    {"quote": "In the middle of difficulties lies opportunity.", "author": "Albert Einstein"},
+    {"quote": "Believe you can and you're halfway there.", "author": "Theodore Roosevelt"},
+    {"quote": "Don't watch the clock; do what it does. Keep going.", "author": "Sam Levenson"},
+    {"quote": "Success is not final, failure is not fatal: It is the courage to continue that counts.", "author": "Winston Churchill"},
+    {"quote": "Hardships often prepare ordinary people for an extraordinary destiny.", "author": "C.S. Lewis"},
+    {"quote": "The only limit to our realization of tomorrow will be our doubts of today.", "author": "Franklin D. Roosevelt"},
+    {"quote": "What you get by achieving your goals is not as important as what you become by achieving your goals.", "author": "Zig Ziglar"},
+    {"quote": "Believe in yourself and all that you are. Know that there is something inside you that is greater than any obstacle.", "author": "Christian D. Larson"},
+    {"quote": "Success is not the key to happiness. Happiness is the key to success. If you love what you are doing, you will be successful.", "author": "Albert Schweitzer"},
+    {"quote": "The only way to do great work is to love what you do.", "author": "Steve Jobs"},
+    {"quote": "The road to success and the road to failure are almost exactly the same.", "author": "Colin R. Davis"},
+    {"quote": "Success usually comes to those who are too busy to be looking for it.", "author": "Henry David Thoreau"},
+    {"quote": "I find that the harder I work, the more luck I seem to have.", "author": "Thomas Jefferson"},
+    {"quote": "The secret to getting ahead is getting started.", "author": "Mark Twain"},
+    {"quote": "The only place where success comes before work is in the dictionary.", "author": "Vidal Sassoon"},
+    {"quote": "Success is walking from failure to failure with no loss of enthusiasm.", "author": "Winston Churchill"},
+    {"quote": "Success is not only about making money. It's about making a difference.", "author": "Unknown"},
+    {"quote": "Success is not the result of spontaneous combustion. You must set yourself on fire.", "author": "Arnold H. Glasow"},
+    {"quote": "The only thing standing between you and your dream is the will to try and the belief that it is actually possible.", "author": "Joel Brown"},
+    {"quote": "Your time is limited, don't waste it living someone else's life.", "author": "Steve Jobs"},
+    {"quote": "Don't let the fear of what could happen make nothing happen.", "author": "Roy T. Bennett"},
+]
+
 
 DEFAULT = Color.default()
 TEAL = Color.teal()
@@ -78,7 +182,8 @@ color_list = [
     GREYPLE,
 ]
 
-
+en_users = []
+ru_users = []
 embedCMDS = Embed(
     title="Команды KnyshBoT",
     description="Вот список доступных команд: ",
@@ -103,28 +208,59 @@ async def cmds(ctx):
 
 @bot.command()
 async def test(ctx):
-    testPhrases = [
-        f"Я живой не парься, {ctx.author.mention}",
-        "я тут",
-        "шо надо",
-        "я слушаю",
-        "о да, админ в чате",
-    ]
-    await ctx.send(random.choice(testPhrases))
+    try:
+        user_config = load_config()
+        user_id = str(ctx.author.id)
+        if str(ctx.author.id) not in user_config:
+                user_config[str(ctx.author.id)] = "ru"
+                save_config(user_config)
+        if user_config[user_id] == "ru":
+            testPhrases = [
+                f"Я живой не парься, {ctx.author.mention}",
+                "я тут",
+                "шо надо",
+                "я слушаю",
+                "о да, админ в чате",
+            ]
+            await ctx.send(random.choice(testPhrases))
+        elif user_config[user_id] == "en":
+            testPhrases = [
+                f"I am alive, {ctx.author.mention}",
+                "bro, I am here, why?",
+                "what do you need, my man?",
+                "How can I assist you today?",
+                "Oh yes, admin is in the chat",
+            ]
+            await ctx.send(random.choice(testPhrases))
+        
+    except Exception as e:
+        print(e)
 
 
 @bot.command()
 async def code(ctx):
-
+    user_config = load_config()
+    user_id = str(ctx.author.id)
+    if str(ctx.author.id) not in user_config:
+            user_config[str(ctx.author.id)] = "ru"
+            save_config(user_config)
     def create_error_embed(error_message):
+        if user_config[user_id] == "ru":
+            label = "Возникла Ошибка"
+        else:
+            label = "Error Occured"
         embed = discord.Embed(
-            title="Error", description=error_message, color=discord.Color.red()
+            title=label, description=error_message, color=discord.Color.red()
         )
         return embed
 
 
+    if user_config[user_id] == "ru":
+        label = "Пишите свой код здесь и отправтье для отладки"
+    else:
+        label = "Write your code and send it for debugging."
 
-    await ctx.send("Write your code here and send to debug")
+    await ctx.send(label)
 
     def check(msg):
         return msg.author == ctx.author and msg.content != "/code"
@@ -154,12 +290,20 @@ async def code(ctx):
 
 @bot.command()
 async def ping(ctx):
-
+    user_config = load_config()
+    user_id = str(ctx.author.id)
+    if str(ctx.author.id) not in user_config:
+            user_config[str(ctx.author.id)] = "ru"
+            save_config(user_config)
     # Record the time when the user's message was received
     start_time = time.time()
 
     # Send a temporary message to calculate round-trip time
-    temp_message = await ctx.send("Calculating ping...")
+    if user_config[user_id] == "ru":
+        label = "Вычисляем пинг..."
+    else: 
+        label = "Calculating Ping.."
+    temp_message = await ctx.send(label)
 
     # Calculate round-trip time (time taken from sending to receiving the temporary message)
     round_trip_time = round((time.time() - start_time) * 1000)
@@ -169,7 +313,11 @@ async def ping(ctx):
     if round_trip_time > 300:
         img = "🔴"
     # Edit the temporary message to display ping results
-    await temp_message.edit(content=f"{img} Ping is: {round_trip_time}ms")
+    if user_config[user_id] == "ru":
+        label = "Пинг бота: "
+    else:
+        label = "Bot latency is:"
+    await temp_message.edit(content=f"{img} {label} {round_trip_time}ms")
 
 
 @bot.command()
@@ -177,9 +325,16 @@ async def advt(ctx: commands.Context, *, args):
     try:
         result = str(args)
         channel = ctx.channel
-
+        user_config = load_config()
+        user_id = str(ctx.author.id)
+        if str(ctx.author.id) not in user_config:
+                user_config[str(ctx.author.id)] = "ru"
+                save_config(user_config)
         await ctx.message.delete()
-        phrases = ["Объявление от: ", "С любовью, ваш ", "Это написал ", "Вас уведомляет ", "Пишет админчик "]
+        if user_config[user_id] == "ru":
+            phrases = ["Объявление от: ", "С любовью, ваш ", "Это написал ", "Вас уведомляет ", "Пишет админчик "]
+        else: 
+            phrases = ["An advertisement from: ", "With love, your: ", "This was written by: ", "You are being notified by: ", "Written by admin "]
         await ctx.send(
             embed=discord.Embed(
                 title=f"{result}",
@@ -188,9 +343,16 @@ async def advt(ctx: commands.Context, *, args):
             )
         )
     except Exception as e:
+        if user_config[user_id] == "ru":
+            title = "Ошибка"
+            desc = "Объявления доступны только для каналов на серверах"
+        else:
+            title="Error"
+            desc ="Advertisements are available only for channels on servers."
+
         embed = discord.Embed(
-            title="Ошибка",
-            description="Обьявления доступны только для каналов на серверах",
+            title=title,
+            description=desc,
             color=RED,
         )
         await ctx.send(embed=embed)
@@ -226,9 +388,21 @@ async def qr(ctx, *, args):
 @qr.error
 async def make_qr_code_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
+        user_config = load_config()
+        user_id = str(ctx.author.id)
+        if str(ctx.author.id) not in user_config:
+                user_config[str(ctx.author.id)] = "ru"
+                save_config(user_config)
+        if user_config[user_id] == "ru":
+            title = "Ошибка"
+            description='Пожалуйста, предоставтье значение для qr-кода после команды.\nПример: "/qr www.example.com"'
+        else:
+            title="Error"
+            description = 'Make sure you provided required data for a qr-code\nUsage: /qr www.example.com'
+            
         embed = discord.Embed(
-            title="Ошибка",
-            description='Пожалуйста, предоставтье значение для qr-кода после команды.\nПример: "/qr www.example.com"',
+            title=title,
+            description=description,
             color=0xFC2403,
         )
         await ctx.send(embed=embed)
@@ -243,10 +417,30 @@ class TicTacToeButton(discord.ui.Button["TicTacToe"]):
         super().__init__(style=discord.ButtonStyle.secondary, label="\u200b", row=y)
         self.x = x
         self.y = y
+        
 
     # This function is called whenever this particular button is pressed
     # This is part of the "meat" of the game logic
     async def callback(self, interaction: discord.Interaction):
+
+        # user_config = load_config()
+        # user_id = str(ctx.author.id)
+        # if str(ctx.author.id) not in user_config:
+        #         user_config[str(ctx.author.id)] = "ru"
+        #         save_config(user_config)
+        # if user_config[user_id] == "ru":
+        #     contextX = "Ходит X"
+        #     contextO = "Ходит O"
+        #     contextWinX = 'Победил "X"'
+        #     contextWinO = 'Победил "O"'
+        #     contextDraw = 'Ничья!'
+        # else:
+        #     contextX='Plays X'
+        #     contextO ='Plays O'
+        #     contextWinX ="Won by \"X\""
+        #     contextWinO ="Won by \"O\""
+        #     contextDraw = 'It\'s draw!'
+        
         assert self.view is not None
         view: TicTacToe = self.view
         state = view.board[self.y][self.x]
@@ -259,23 +453,23 @@ class TicTacToeButton(discord.ui.Button["TicTacToe"]):
             self.disabled = True
             view.board[self.y][self.x] = view.X
             view.current_player = view.O
-            content = "Ходит чел с О:"
+            content = ""
         else:
             self.style = discord.ButtonStyle.success
             self.label = "O"
             self.disabled = True
             view.board[self.y][self.x] = view.O
             view.current_player = view.X
-            content = "Ходит чел с Х:"
+            content = ""
 
         winner = view.check_board_winner()
         if winner is not None:
             if winner == view.X:
-                content = "Победил Х!"
+                content = ""
             elif winner == view.O:
-                content = "Победил чел с О!"
+                content = ""
             else:
-                content = "Ничья, победила дружба!!"
+                content = ""
 
             for child in view.children:
                 child.disabled = True
@@ -591,7 +785,7 @@ async def cls(ctx):
 @bot.command()
 async def tic(ctx: commands.Context):
     """Starts a tic-tac-toe game with yourself."""
-    await ctx.send("Крестики-нолики: Х ходит первым", view=TicTacToe())
+    await ctx.send(content="", view=TicTacToe())
 
 
 @bot.command()
@@ -666,6 +860,206 @@ async def num(ctx):
                     )
         embed.add_field(name=f"Загаданное число: {target_number}", value="")
         await ctx.send(embed=embed)
+
+@bot.command()
+async def quote(ctx):
+    try:
+        user_config = load_config()
+        user_id = str(ctx.author.id)
+        if str(ctx.author.id) not in user_config:
+                user_config[str(ctx.author.id)] = "ru"
+                save_config(user_config)
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        
+        user = ctx.message.author
+        avatar_url = user.avatar.url if user.avatar else user.default_avatar.url
+        if user_config[user_id] == "ru":
+            label = "Запрошено пользователем: "
+            random_quote = random.choice(cool_quotes)
+            author = random_quote["author"]
+            quote = random_quote["quote"]
+            requester = ctx.author.display_name
+
+
+            embed = discord.Embed(title=quote, description=f"- {author}", color=GREEN)
+        else:
+            label = "Requested by: "
+            random_quote = random.choice(cool_quotes_en)
+            author = random_quote["author"]
+            quote = random_quote["quote"]
+            requester = ctx.author.display_name
+
+
+            embed = discord.Embed(title=quote, description=f"- {author}", color=GREEN)
+        embed.set_footer(text=f"{label} {requester}", icon_url=avatar_url)
+        embed.set_thumbnail(url="https://memepedia.ru/wp-content/uploads/2022/10/mudroe-tainstvennoe-derevo-mem-25.jpg")
+
+        await ctx.send(embed=embed)
+    except Exception as e:
+        print(e)
+        
+@bot.command()
+async def pic(ctx, member: discord.Member = None):
+    try:
+        user_config = load_config()
+        user_id = str(ctx.author.id)
+        if str(ctx.author.id) not in user_config:
+                user_config[str(ctx.author.id)] = "ru"
+                save_config(user_config)
+        if member is None:
+            member = ctx.author
+            
+        avatar_url = member.avatar.url
+        png_link = f"[PNG]({avatar_url})"
+        jpg_link = f"[JPG]({avatar_url.replace('.png', '.jpg')})"
+        webp_link = f"[WebP]({avatar_url.replace('.png', '.webp')})"
+        if user_config[user_id] == "ru":
+            label = "Аватарка пользователя: "
+            dwn = "Скачать в форматах:"
+        else:
+            label = 'Avatar of the User: '
+            dwn = "Download formats:"
+        embed = discord.Embed(title=f"{label} {member.display_name}")
+        embed.set_image(url=avatar_url)
+        embed.description = f"{dwn} \n{png_link} | {jpg_link} | {webp_link}"
+        
+        await ctx.send(embed=embed)
+    except Exception as e:
+        print(e)
+
+class HelpMenu:
+    def __init__(self, ctx):
+        self.ctx = ctx
+        self.pages = [
+            # List of embeds for each page
+            discord.Embed(title="Page 1", description="Commands 1 and 2"),
+            discord.Embed(title="Page 2", description="Commands 3 and 4"),
+            discord.Embed(title="Page 3", description="Commands 5 and 6"),
+        ]
+        self.current_page = 0
+
+    async def send(self):
+        embed = self.pages[self.current_page]
+        embed.set_footer(text=f"Page {self.current_page + 1}/{len(self.pages)}")
+        message = await self.ctx.send(embed=embed)
+
+        await message.add_reaction("⬅️")
+        await message.add_reaction("➡️")
+
+        def check(reaction, user):
+            return (
+                user == self.ctx.author
+                and reaction.message.id == message.id
+                and str(reaction.emoji) in ["⬅️", "➡️"]
+            )
+
+        while True:
+            try:
+                reaction, _ = await bot.wait_for("reaction_add", timeout=60, check=check)
+                await message.remove_reaction(reaction, self.ctx.author)
+
+                if str(reaction.emoji) == "⬅️":
+                    self.current_page = max(0, self.current_page - 1)
+                elif str(reaction.emoji) == "➡️":
+                    self.current_page = min(len(self.pages) - 1, self.current_page + 1)
+
+                embed = self.pages[self.current_page]
+                embed.set_footer(text=f"Page {self.current_page + 1}/{len(self.pages)}")
+                await message.edit(embed=embed)
+
+            except asyncio.TimeoutError:
+                break
+
+@bot.command()
+async def help(ctx):
+    if isinstance(ctx.channel, discord.DMChannel):
+        await ctx.send("Sorry, I can't provide help in DMs.")
+        return
+
+    menu = HelpMenu(ctx)
+    await menu.send()
+
+@bot.command()
+async def help2(ctx):
+
+    embed = discord.Embed(title="Help", description="Use the buttons below to navigate through the help pages.", color=0x00ff00)
+    embed.add_field(name="Page 1", value="Help page 1", inline=False)
+    embed.add_field(name="Page 2", value="Help page 2", inline=False)
+    embed.add_field(name="Page 3", value="Help page 3", inline=False)
+    message = await ctx.send(embed=embed)
+    await message.add_reaction("1️⃣")
+    await message.add_reaction("2️⃣")
+    await message.add_reaction("3️⃣")
+
+
+    @bot.event
+    async def on_reaction_add(reaction, user):
+        if user == bot.user:
+            return
+        if reaction.emoji == "1️⃣":
+            await reaction.message.edit(embed=discord.Embed(title="Help 1", description="Use the buttons below to navigate through the help pages.", color=0x00ff00).add_field(name="Page 1", value="Help page 1", inline=False).add_field(name="Page 2", value="Help page 2", inline=False).add_field(name="Page 3", value="Help page 3", inline=False))
+        elif reaction.emoji == "2️⃣":
+            await reaction.message.edit(embed=discord.Embed(title="Help 2 ", description="Use the buttons below to navigate through the help pages.", color=0x00ff00).add_field(name="Page 1", value="Help page 1", inline=False).add_field(name="Page 2", value="Help page 2", inline=False).add_field(name="Page 3", value="Help page 3", inline=False))
+        elif reaction.emoji == "3️⃣":
+            await reaction.message.edit(embed=discord.Embed(title="Help 3 ", description="Use the buttons below to navigate through the help pages.", color=0x00ff00).add_field(name="Page 1", value="Help page 1", inline=False).add_field(name="Page 2", value="Help page 2", inline=False).add_field(name="Page 3", value="Help page 3", inline=False))
+        try:
+            await reaction.remove(user)
+        except Exception as e:
+            pass
+
+@bot.command()
+async def lang(ctx, selected_language):
+    try:
+        selected_language = selected_language.lower()
+
+        if selected_language == "en":
+            user_config = load_config()
+            
+            user_config[str(ctx.author.id)] = "en"
+            save_config(user_config)
+            await ctx.send(f'{ctx.author.display_name} is now in the English list.')
+        
+        elif selected_language == "ru":
+            user_config = load_config()
+            
+            user_config[str(ctx.author.id)] = "ru"
+            save_config(user_config)
+            await ctx.send(f'{ctx.author.display_name} is now in the Russian list.')
+        
+        else:
+            await ctx.send('Invalid language choice.')
+    except Exception as e:
+        print(e)
+
+
+@bot.command()
+async def vote(ctx, *, vote_input):
+    try:
+        vote_parts = vote_input.split("&")
+        if len(vote_parts) < 3:
+            await ctx.send("Usage: `/vote Topic & Option1 & Option2 & Option3 ...`")
+            return
+
+        topic = vote_parts[0].strip()
+        options = [option.strip() for option in vote_parts[1:]]
+
+
+        embed = discord.Embed(title=f"🗳️ Vote: {topic}", color=0x3498db)
+        for idx, option in enumerate(options, start=1):
+            embed.add_field(name=f"Option {idx}", value=option, inline=False)
+        user = ctx.message.author
+        avatar_url = user.avatar.url if user.avatar else user.default_avatar.url
+        embed.set_footer(text=f"Vote initiated by {ctx.author.display_name}", icon_url=avatar_url)
+
+        message = await ctx.send(embed=embed)
+
+        for idx in range(len(options)):
+            await message.add_reaction(f"{idx + 1}\N{COMBINING ENCLOSING KEYCAP}")
+    except Exception as e:
+        print(e)
 
 
 @bot.event
