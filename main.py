@@ -1,12 +1,13 @@
 # KnyshBoT Discord Project by @De44iK aka Denys Podolkhov
 # Feel free to copy, use and modify this code
-# Version: BotOS 0.34 Safety Feature Update
+# Version: BotOS 0.78 Big AF Update
 
 from secret import BOT_TOKEN_RELEASE, BOT_TOKEN_TESTING, WEATHER_API_KEY
 from config import BOT_PREFIX, BOT_MODE
 from discord.ui import Button, View
 from discord import Embed, Color
 from discord.ext import commands
+from datetime import datetime
 from typing import List
 import contextlib
 import traceback
@@ -20,9 +21,8 @@ import time
 import json
 import os
 import io
-import openai
-from datetime import datetime, timedelta
 
+stop_deletion = False
 # Load music configuration from JSON file
 def load_music_config():
     try:
@@ -54,7 +54,8 @@ def save_config(config):
 
 intents = discord.Intents.all()
 intents.message_content = True
-bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents, help_command=None)
+bot = commands.Bot(command_prefix=BOT_PREFIX, intents=intents)
+
 @bot.event
 async def on_message(message):
     if message.content.startswith('s!play'):
@@ -184,26 +185,55 @@ color_list = [
 
 en_users = []
 ru_users = []
-embedCMDS = Embed(
-    title="Команды KnyshBoT",
-    description="Вот список доступных команд: ",
-    color=Color.blue(),  # Blue color for the embed
-)
-embedCMDS.add_field(name="/menu", value="💬 Открыть стартовое меню", inline=False)
-embedCMDS.add_field(name="/test", value="🟢 Проверить онлайн ли бот", inline=False)
-embedCMDS.add_field(name="/ping", value="🌐 Проверить скорость соединения с ботом", inline=False)
-embedCMDS.add_field(name="/qr", value="🔳 Создать qr-код с любой информацией", inline=False)
-embedCMDS.add_field(name="/code", value="💻 Запустить код на Python прямо в чате", inline=False)
-embedCMDS.add_field(name="/cmds", value="🧾 Открыть список команд в обход меню", inline=False)
-embedCMDS.add_field(name="/advt", value="❗ Создать объявление в канале сервера", inline=False)
-embedCMDS.add_field(name="/cls", value="🎵 Очистить чат (только для музыкального чата)", inline=False)
-embedCMDS.add_field(name="/tic", value="⭕ Сыграть в Крестики-Нолики", inline=False)
-embedCMDS.add_field(name="/w", value="🌥 Узнать погоду в любом городе", inline=False)
-embedCMDS.add_field(name="/num", value="❓ Игра: Угадай Число", inline=False)
+
 
 @bot.command()
 async def cmds(ctx):
-    await ctx.send(embed=embedCMDS)
+    await help_embed(ctx)
+
+
+async def help_embed(ctx):
+    embed = Embed(title="Команды/Помощь", description="Используйте реакции снизу для навигации по списку", color=0x00ff00)
+    message = await ctx.send(embed=embed)
+    await message.add_reaction("1️⃣")
+    await message.add_reaction("2️⃣")
+    await message.add_reaction("3️⃣")
+
+
+    @bot.event
+    async def on_reaction_add(reaction, user):
+        if user == bot.user:
+            return
+        if reaction.emoji == "1️⃣":
+            embed = discord.Embed(title="1️⃣Команды", description="**Инструменты и функции**", color=0x00ff00)
+            embed.add_field(name="--> /menu", value="💬 **Открыть стартовое меню**", inline=False)
+            embed.add_field(name="--> /cmds", value="🧾 **Открыть этот список команд в обход меню**", inline=False)
+            embed.add_field(name="--> /ping", value="🌐 **Проверить скорость соединения с ботом**", inline=False)
+            embed.add_field(name="--> /test", value="🟢 **Проверить онлайн ли бот**", inline=False)
+            embed.add_field(name="--> /qr", value="🔳 **Создать qr-код с любой информацией**\nИспользование: /qr www.example.com", inline=False)
+            embed.add_field(name="--> /code", value="💻 **Запустить код на Python прямо в чате**", inline=False)
+            embed.add_field(name="--> /advt", value="❗ **Создать объявление в канале сервера**\nИспользование: /advt [Содержание обьявления]", inline=False)
+            embed.add_field(name="--> /test", value="🟢 **Проверить онлайн ли бот**", inline=False)
+            embed.add_field(name="--> /cls", value="**🗑️ Очистить чат**\nИспользование: /cls [кол-во сообщений для удаления]\nВведите /cls all что бы очистить весь чат\n\"/stop\" останавливает удаление сообщений", inline=False)
+            embed.add_field(name="--> /pic", value="**🖼️ Прислать аватар пользователя с ссылкой на скачивание**\nИспользование: /pic @пользователь", inline=False)
+            
+            await reaction.message.edit(embed=embed)
+        elif reaction.emoji == "2️⃣":
+            embed = discord.Embed(title="2️⃣Команды", description="Игры и развлечения", color=0x00ff00)
+            embed.add_field(name="--> /tic", value="Начать игру в крестики-нолики", inline=False)
+            embed.add_field(name="--> /num", value="Игра: Угадай число", inline=False)
+            embed.add_field(name="Page 3", value="Help page 3", inline=False)
+            await reaction.message.edit(embed=embed)
+        elif reaction.emoji == "3️⃣":
+            embed = discord.Embed(title="3️⃣Команды", description="Прочее", color=0x00ff00)
+            embed.add_field(name="--> /lang", value="**🅰️ Сменить язык бота для пользователя**\nИспользование: /pic @пользователь", inline=False)
+            embed.add_field(name="--> /music", value="🎵 **Показать историю проигранной музыки**", inline=False)
+            embed.add_field(name="Page 3", value="Help page 3", inline=False)
+            await reaction.message.edit(embed=embed)
+        try:
+            await reaction.remove(user)
+        except Exception as e:
+            pass
 
 
 @bot.command()
@@ -550,86 +580,171 @@ async def weather(ctx, *, city_name):
         return response.json()
     
     def translate_weather(value):
-        match value:
-            case "clear sky":
-                a = "Ясно ☀️"
-            case "few clouds":
-                a = "Немного облачно 🌤"
-            case "scattered clouds":
-                a = "Рассеянные облака ☁️"
-            case "broken clouds":
-                a = "Облачно с прояснениями ☁️"
-            case "overcast clouds":
-                a = "Пасмурно ☁️"
-            case "mist":
-                a = "Туман 🌫️"
-            case "fog":
-                a = "Туман 🌫️"
-            case "haze":
-                a = "Мгла 🌫️"
-            case "smoke":
-                a = "Дымка 🔥"
-            case "dust":
-                a = "Пыль 💨"
-            case "sand":
-                a = "Песчаная буря 🌪️"
-            case "ash":
-                a = "Пепел ☠️"
-            case "squalls":
-                a = "Шквалы 💨"
-            case "tornado":
-                a = "Торнадо 🌪️"
-            case "tropical storm":
-                a = "Тропический шторм 🌀"
-            case "hurricane":
-                a = "Ураган 🌀"
-            case "light rain":
-                a = "Легкий дождь 🌧️"
-            case "moderate rain":
-                a = "Умеренный дождь 🌧️"
-            case "heavy rain":
-                a = "Сильный дождь 🌧️"
-            case "shower rain":
-                a = "Ливневый дождь 🌧️"
-            case "light snow":
-                a = "Легкий снег 🌨️"
-            case "moderate snow":
-                a = "Умеренный снег 🌨️"
-            case "heavy snow":
-                a = "Сильный снег 🌨️"
-            case "sleet":
-                a = "Дождь со снегом 🌨️"
-            case "shower sleet":
-                a = "Ливневый дождь со снегом 🌨️"
-            case "light rain and snow":
-                a = "Легкий дождь и снег 🌧️❄️"
-            case "moderate rain and snow":
-                a = "Умеренный дождь и снег 🌧️❄️"
-            case "light shower snow":
-                a = "Легкий ливневый снег 🌨️"
-            case "thunderstorm with light rain":
-                a = "Гроза с небольшим дождем ⛈️🌧️"
-            case "thunderstorm with rain":
-                a = "Гроза с дождем ⛈️🌧️"
-            case "thunderstorm with heavy rain":
-                a = "Гроза с сильным дождем ⛈️🌧️"
-            case "light thunderstorm":
-                a = "Легкая гроза ⛈️"
-            case "moderate thunderstorm":
-                a = "Умеренная гроза ⛈️"
-            case "heavy thunderstorm":
-                a = "Сильная гроза ⛈️"
-            case "ragged thunderstorm":
-                a = "Неровная гроза ⛈️"
-            case "thunderstorm with light drizzle":
-                a = "Гроза с моросящим дождем и молниями ⛈️🌧️"
-            case "thunderstorm with drizzle":
-                a = "Гроза с моросящим дождем ⛈️🌧️"
-            case "thunderstorm with heavy drizzle":
-                a = "Гроза с сильным моросящим дождем ⛈️🌧️"
-            case _:
-                a = "Неизвестно ❓"
-
+        user_config = load_config()
+        user_id = str(ctx.author.id)
+        if str(ctx.author.id) not in user_config:
+                user_config[str(ctx.author.id)] = "ru"
+                save_config(user_config)
+        if user_config[user_id] == "ru":
+            match value:
+                case "clear sky":
+                    a = "Ясно ☀️"
+                case "few clouds":
+                    a = "Немного облачно 🌤"
+                case "scattered clouds":
+                    a = "Рассеянные облака ☁️"
+                case "broken clouds":
+                    a = "Облачно с прояснениями ☁️"
+                case "overcast clouds":
+                    a = "Пасмурно ☁️"
+                case "mist":
+                    a = "Туман 🌫️"
+                case "fog":
+                    a = "Туман 🌫️"
+                case "haze":
+                    a = "Мгла 🌫️"
+                case "smoke":
+                    a = "Дымка 🔥"
+                case "dust":
+                    a = "Пыль 💨"
+                case "sand":
+                    a = "Песчаная буря 🌪️"
+                case "ash":
+                    a = "Пепел ☠️"
+                case "squalls":
+                    a = "Шквалы 💨"
+                case "tornado":
+                    a = "Торнадо 🌪️"
+                case "tropical storm":
+                    a = "Тропический шторм 🌀"
+                case "hurricane":
+                    a = "Ураган 🌀"
+                case "light rain":
+                    a = "Легкий дождь 🌧️"
+                case "moderate rain":
+                    a = "Умеренный дождь 🌧️"
+                case "heavy rain":
+                    a = "Сильный дождь 🌧️"
+                case "shower rain":
+                    a = "Ливневый дождь 🌧️"
+                case "light snow":
+                    a = "Легкий снег 🌨️"
+                case "moderate snow":
+                    a = "Умеренный снег 🌨️"
+                case "heavy snow":
+                    a = "Сильный снег 🌨️"
+                case "sleet":
+                    a = "Дождь со снегом 🌨️"
+                case "shower sleet":
+                    a = "Ливневый дождь со снегом 🌨️"
+                case "light rain and snow":
+                    a = "Легкий дождь и снег 🌧️❄️"
+                case "moderate rain and snow":
+                    a = "Умеренный дождь и снег 🌧️❄️"
+                case "light shower snow":
+                    a = "Легкий ливневый снег 🌨️"
+                case "thunderstorm with light rain":
+                    a = "Гроза с небольшим дождем ⛈️🌧️"
+                case "thunderstorm with rain":
+                    a = "Гроза с дождем ⛈️🌧️"
+                case "thunderstorm with heavy rain":
+                    a = "Гроза с сильным дождем ⛈️🌧️"
+                case "light thunderstorm":
+                    a = "Легкая гроза ⛈️"
+                case "moderate thunderstorm":
+                    a = "Умеренная гроза ⛈️"
+                case "heavy thunderstorm":
+                    a = "Сильная гроза ⛈️"
+                case "ragged thunderstorm":
+                    a = "Неровная гроза ⛈️"
+                case "thunderstorm with light drizzle":
+                    a = "Гроза с моросящим дождем и молниями ⛈️🌧️"
+                case "thunderstorm with drizzle":
+                    a = "Гроза с моросящим дождем ⛈️🌧️"
+                case "thunderstorm with heavy drizzle":
+                    a = "Гроза с сильным моросящим дождем ⛈️🌧️"
+                case _:
+                    a = "Неизвестно ❓"
+        else:
+            match value:
+                case "clear sky":
+                    a = "Clear sky ☀️"
+                case "few clouds":
+                    a = "Few clouds 🌤️"
+                case "scattered clouds":
+                    a = "Scattered clouds ☁️"
+                case "broken clouds":
+                    a = "Broken clouds ☁️"
+                case "overcast clouds":
+                    a = "Overcast clouds ☁️"
+                case "mist":
+                    a = "Mist 🌫️"
+                case "fog":
+                    a = "Fog 🌫️"
+                case "haze":
+                    a = "Haze 🌫️"
+                case "smoke":
+                    a = "Smoke 🔥"
+                case "dust":
+                    a = "Dust 💨"
+                case "sand":
+                    a = "Sandstorm 🌪️"
+                case "ash":
+                    a = "Ash ☠️"
+                case "squalls":
+                    a = "Squalls 💨"
+                case "tornado":
+                    a = "Tornado 🌪️"
+                case "tropical storm":
+                    a = "Tropical storm 🌀"
+                case "hurricane":
+                    a = "Hurricane 🌀"
+                case "light rain":
+                    a = "Light rain 🌧️"
+                case "moderate rain":
+                    a = "Moderate rain 🌧️"
+                case "heavy rain":
+                    a = "Heavy rain 🌧️"
+                case "shower rain":
+                    a = "Shower rain 🌧️"
+                case "light snow":
+                    a = "Light snow 🌨️"
+                case "moderate snow":
+                    a = "Moderate snow 🌨️"
+                case "heavy snow":
+                    a = "Heavy snow 🌨️"
+                case "sleet":
+                    a = "Sleet 🌨️"
+                case "shower sleet":
+                    a = "Shower sleet 🌨️"
+                case "light rain and snow":
+                    a = "Light rain and snow 🌧️❄️"
+                case "moderate rain and snow":
+                    a = "Moderate rain and snow 🌧️❄️"
+                case "light shower snow":
+                    a = "Light shower snow 🌨️"
+                case "thunderstorm with light rain":
+                    a = "Thunderstorm with light rain ⛈️🌧️"
+                case "thunderstorm with rain":
+                    a = "Thunderstorm with rain ⛈️🌧️"
+                case "thunderstorm with heavy rain":
+                    a = "Thunderstorm with heavy rain ⛈️🌧️"
+                case "light thunderstorm":
+                    a = "Light thunderstorm ⛈️"
+                case "moderate thunderstorm":
+                    a = "Moderate thunderstorm ⛈️"
+                case "heavy thunderstorm":
+                    a = "Heavy thunderstorm ⛈️"
+                case "ragged thunderstorm":
+                    a = "Ragged thunderstorm ⛈️"
+                case "thunderstorm with light drizzle":
+                    a = "Thunderstorm with light drizzle ⛈️🌧️"
+                case "thunderstorm with drizzle":
+                    a = "Thunderstorm with drizzle ⛈️🌧️"
+                case "thunderstorm with heavy drizzle":
+                    a = "Thunderstorm with heavy drizzle ⛈️🌧️"
+                case _:
+                    a = "Unknown ❓"
         return a
 
     def create_weather_embed(data):
@@ -726,7 +841,7 @@ async def menu(ctx):
         await interaction.response.edit_message(content="ㅤ", view=None)
         await message.delete()  # Delete the menu message
 
-        await ctx.send(embed=embedCMDS)
+        await help_embed(ctx)
 
     async def button3_callback(interaction):
         try:
@@ -761,25 +876,56 @@ async def menu(ctx):
 
 
 @bot.command()
-async def cls(ctx):
-    if ctx.channel.id == 996721226166841424:
+async def cls(ctx, limit):
+    try:
         # Fetch the channel to clear messages from
         channel = ctx.channel
-
-        # Fetch and delete messages in batches
+        global stop_deletion
+        stop_deletion = False  # Flag to stop message deletion
         messages_deleted = 0
-        async for message in channel.history(limit=None):
-            await message.delete()
-            messages_deleted += 1
+        if limit.lower() == "all":
+            await ctx.send("Are you sure you want to delete all messages in this channel? (yes/no)")
 
-        await ctx.send(f"Channel cleared. Deleted {messages_deleted} messages.")
-    else:
-        embed = discord.Embed(
-            title="🟥 Ошибка",
-            description="Эта команда только для музыкального чата",
-            color=RED,
-        )
-        await ctx.send(embed=embed)
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel and m.content.lower() in ["yes", "no", "/stop"]
+
+            response = await bot.wait_for("message", check=check)
+
+            if response.content.lower() == "yes":
+                
+                async for message in channel.history():
+                    
+                    if stop_deletion:
+                        break
+                    await message.delete()
+                    messages_deleted += 1
+                await ctx.send(f"Channel cleared. Deleted {messages_deleted} messages.")
+            elif response.content.lower() == "/stop":
+                await ctx.send("Channel clearing canceled.")
+                stop_deletion = True
+            else:
+                await ctx.send("Channel clearing canceled.")
+
+        else:
+            lim = int(limit)
+            async for message in channel.history():
+                    
+                if stop_deletion or lim < 0:
+                    break
+                await message.delete()
+                lim -= 1
+                messages_deleted += 1
+            await ctx.send(f"Channel cleared. Deleted {messages_deleted -1 } messages.")
+
+    except Exception as e:
+        print(e)
+
+
+@bot.command()
+async def stop(ctx):
+    global stop_deletion
+    stop_deletion = True
+    await ctx.send("Message deletion has been stopped.")
 
 
 @bot.command()
@@ -930,85 +1076,6 @@ async def pic(ctx, member: discord.Member = None):
     except Exception as e:
         print(e)
 
-class HelpMenu:
-    def __init__(self, ctx):
-        self.ctx = ctx
-        self.pages = [
-            # List of embeds for each page
-            discord.Embed(title="Page 1", description="Commands 1 and 2"),
-            discord.Embed(title="Page 2", description="Commands 3 and 4"),
-            discord.Embed(title="Page 3", description="Commands 5 and 6"),
-        ]
-        self.current_page = 0
-
-    async def send(self):
-        embed = self.pages[self.current_page]
-        embed.set_footer(text=f"Page {self.current_page + 1}/{len(self.pages)}")
-        message = await self.ctx.send(embed=embed)
-
-        await message.add_reaction("⬅️")
-        await message.add_reaction("➡️")
-
-        def check(reaction, user):
-            return (
-                user == self.ctx.author
-                and reaction.message.id == message.id
-                and str(reaction.emoji) in ["⬅️", "➡️"]
-            )
-
-        while True:
-            try:
-                reaction, _ = await bot.wait_for("reaction_add", timeout=60, check=check)
-                await message.remove_reaction(reaction, self.ctx.author)
-
-                if str(reaction.emoji) == "⬅️":
-                    self.current_page = max(0, self.current_page - 1)
-                elif str(reaction.emoji) == "➡️":
-                    self.current_page = min(len(self.pages) - 1, self.current_page + 1)
-
-                embed = self.pages[self.current_page]
-                embed.set_footer(text=f"Page {self.current_page + 1}/{len(self.pages)}")
-                await message.edit(embed=embed)
-
-            except asyncio.TimeoutError:
-                break
-
-@bot.command()
-async def help(ctx):
-    if isinstance(ctx.channel, discord.DMChannel):
-        await ctx.send("Sorry, I can't provide help in DMs.")
-        return
-
-    menu = HelpMenu(ctx)
-    await menu.send()
-
-@bot.command()
-async def help2(ctx):
-
-    embed = discord.Embed(title="Help", description="Use the buttons below to navigate through the help pages.", color=0x00ff00)
-    embed.add_field(name="Page 1", value="Help page 1", inline=False)
-    embed.add_field(name="Page 2", value="Help page 2", inline=False)
-    embed.add_field(name="Page 3", value="Help page 3", inline=False)
-    message = await ctx.send(embed=embed)
-    await message.add_reaction("1️⃣")
-    await message.add_reaction("2️⃣")
-    await message.add_reaction("3️⃣")
-
-
-    @bot.event
-    async def on_reaction_add(reaction, user):
-        if user == bot.user:
-            return
-        if reaction.emoji == "1️⃣":
-            await reaction.message.edit(embed=discord.Embed(title="Help 1", description="Use the buttons below to navigate through the help pages.", color=0x00ff00).add_field(name="Page 1", value="Help page 1", inline=False).add_field(name="Page 2", value="Help page 2", inline=False).add_field(name="Page 3", value="Help page 3", inline=False))
-        elif reaction.emoji == "2️⃣":
-            await reaction.message.edit(embed=discord.Embed(title="Help 2 ", description="Use the buttons below to navigate through the help pages.", color=0x00ff00).add_field(name="Page 1", value="Help page 1", inline=False).add_field(name="Page 2", value="Help page 2", inline=False).add_field(name="Page 3", value="Help page 3", inline=False))
-        elif reaction.emoji == "3️⃣":
-            await reaction.message.edit(embed=discord.Embed(title="Help 3 ", description="Use the buttons below to navigate through the help pages.", color=0x00ff00).add_field(name="Page 1", value="Help page 1", inline=False).add_field(name="Page 2", value="Help page 2", inline=False).add_field(name="Page 3", value="Help page 3", inline=False))
-        try:
-            await reaction.remove(user)
-        except Exception as e:
-            pass
 
 @bot.command()
 async def lang(ctx, selected_language):
@@ -1020,14 +1087,14 @@ async def lang(ctx, selected_language):
             
             user_config[str(ctx.author.id)] = "en"
             save_config(user_config)
-            await ctx.send(f'{ctx.author.display_name} is now in the English list.')
+            await ctx.send(f'{ctx.author.display_name}, Your bot response language in now US English💥 🦅 🇺🇸 🦅 🇺🇸')
         
         elif selected_language == "ru":
             user_config = load_config()
             
             user_config[str(ctx.author.id)] = "ru"
             save_config(user_config)
-            await ctx.send(f'{ctx.author.display_name} is now in the Russian list.')
+            await ctx.send(f'{ctx.author.display_name}, Ответы вашего бота теперь будут на русском')
         
         else:
             await ctx.send('Invalid language choice.')
@@ -1035,31 +1102,31 @@ async def lang(ctx, selected_language):
         print(e)
 
 
-@bot.command()
-async def vote(ctx, *, vote_input):
-    try:
-        vote_parts = vote_input.split("&")
-        if len(vote_parts) < 3:
-            await ctx.send("Usage: `/vote Topic & Option1 & Option2 & Option3 ...`")
-            return
+# @bot.command()
+# async def vote(ctx, *, vote_input):
+#     try:
+#         vote_parts = vote_input.split("&")
+#         if len(vote_parts) < 3:
+#             await ctx.send("Usage: `/vote Topic & Option1 & Option2 & Option3 ...`")
+#             return
 
-        topic = vote_parts[0].strip()
-        options = [option.strip() for option in vote_parts[1:]]
+#         topic = vote_parts[0].strip()
+#         options = [option.strip() for option in vote_parts[1:]]
 
 
-        embed = discord.Embed(title=f"🗳️ Vote: {topic}", color=0x3498db)
-        for idx, option in enumerate(options, start=1):
-            embed.add_field(name=f"Option {idx}", value=option, inline=False)
-        user = ctx.message.author
-        avatar_url = user.avatar.url if user.avatar else user.default_avatar.url
-        embed.set_footer(text=f"Vote initiated by {ctx.author.display_name}", icon_url=avatar_url)
+#         embed = discord.Embed(title=f"🗳️ Vote: {topic}", color=0x3498db)
+#         for idx, option in enumerate(options, start=1):
+#             embed.add_field(name=f"Option {idx}", value=option, inline=False)
+#         user = ctx.message.author
+#         avatar_url = user.avatar.url if user.avatar else user.default_avatar.url
+#         embed.set_footer(text=f"Vote initiated by {ctx.author.display_name}", icon_url=avatar_url)
 
-        message = await ctx.send(embed=embed)
+#         message = await ctx.send(embed=embed)
 
-        for idx in range(len(options)):
-            await message.add_reaction(f"{idx + 1}\N{COMBINING ENCLOSING KEYCAP}")
-    except Exception as e:
-        print(e)
+#         for idx in range(len(options)):
+#             await message.add_reaction(f"{idx + 1}\N{COMBINING ENCLOSING KEYCAP}")
+#     except Exception as e:
+#         print(e)
 
 
 @bot.event
@@ -1068,7 +1135,7 @@ async def on_ready():
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.playing,
-            name="/menu | Ver. 0.34 SF",
+            name="/menu | Ver. 0.78 AF",
         )
     )
 
